@@ -29,7 +29,6 @@ import {
 import { ConnectionState, LocalParticipant, Track } from "livekit-client";
 import { QRCodeSVG } from "qrcode.react";
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import tailwindTheme from "../../lib/tailwindTheme.preval";
 import { EditableNameValueRow } from "@/components/config/NameValueRow";
 import { AttributesInspector } from "@/components/config/AttributesInspector";
 import { RpcPanel } from "./RpcPanel";
@@ -152,23 +151,17 @@ export default function Playground({
     }
 
     return (
-      <div className="flex flex-col w-full grow text-gray-950 bg-black rounded-sm border border-gray-800 relative">
+      <div className="flex flex-col w-full grow text-white bg-[#1a1a1a] rounded-sm border border-gray-800 relative">
         {content}
       </div>
     );
   }, [agentVideoTrack, config, roomState]);
 
   useEffect(() => {
-    document.body.style.setProperty(
-      "--lk-theme-color",
-      // @ts-ignore
-      tailwindTheme.colors[config.settings.theme_color]["500"],
-    );
-    document.body.style.setProperty(
-      "--lk-drop-shadow",
-      `var(--lk-theme-color) 0px 0px 18px`,
-    );
-  }, [config.settings.theme_color]);
+    const accent = "#F17455";
+    document.body.style.setProperty("--lk-theme-color", accent);
+    document.body.style.setProperty("--lk-drop-shadow", `${accent} 0px 0px 18px`);
+  }, []);
 
   const audioTileContent = useMemo(() => {
     const disconnectedContent = (
@@ -208,7 +201,6 @@ export default function Playground({
     return visualizerContent;
   }, [
     voiceAssistant.audioTrack,
-    config.settings.theme_color,
     roomState,
     voiceAssistant.state,
   ]);
@@ -458,19 +450,6 @@ export default function Playground({
             <AudioInputTile trackRef={localMicTrack} />
           </ConfigurationPanelItem>
         )}
-        <div className="w-full">
-          <ConfigurationPanelItem title="Color">
-            <ColorPicker
-              colors={themeColors}
-              selectedColor={config.settings.theme_color}
-              onSelect={(color) => {
-                const userSettings = { ...config.settings };
-                userSettings.theme_color = color;
-                setUserSettings(userSettings);
-              }}
-            />
-          </ConfigurationPanelItem>
-        </div>
         {config.show_qr && (
           <div className="w-full">
             <ConfigurationPanelItem title="QR Code">
@@ -481,6 +460,8 @@ export default function Playground({
       </div>
     );
   }, [
+    agentAttributes.attributes,
+    config,
     config.description,
     config.settings,
     config.show_qr,
@@ -557,14 +538,13 @@ export default function Playground({
         logo={logo}
         githubLink={config.github_link}
         height={headerHeight}
-        accentColor={config.settings.theme_color}
         connectionState={roomState}
         onConnectClicked={() =>
           onConnect(roomState === ConnectionState.Disconnected)
         }
       />
       <div
-        className={`flex gap-4 py-4 grow w-full selection:bg-${config.settings.theme_color}-900`}
+        className="flex gap-4 py-4 grow w-full selection:bg-[#F17455]/30 selection:text-white"
         style={{ height: `calc(100% - ${headerHeight}px)` }}
       >
         <div className="flex flex-col grow basis-1/2 gap-4 h-full lg:hidden">

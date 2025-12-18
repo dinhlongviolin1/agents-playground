@@ -14,11 +14,13 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...allProps
 }) => {
+  const accent = accentColor || "#F17455";
   return (
     <button
+      style={{ ["--btn-accent" as any]: accent }}
       className={`flex flex-row ${
-        disabled ? "pointer-events-none" : ""
-      } text-gray-950 text-sm justify-center border border-transparent bg-${accentColor}-500 px-3 py-1 rounded-md transition ease-out duration-250 hover:bg-transparent hover:shadow-${accentColor} hover:border-${accentColor}-500 hover:text-${accentColor}-500 active:scale-[0.98] ${className}`}
+        disabled ? "pointer-events-none opacity-70" : ""
+      } text-[#121212] text-sm justify-center border border-transparent bg-[color:var(--btn-accent)] px-3 py-1 rounded-md transition ease-out duration-250 hover:bg-transparent hover:border-[color:var(--btn-accent)] hover:text-[color:var(--btn-accent)] active:scale-[0.98] ${className}`}
       {...allProps}
     >
       {children}

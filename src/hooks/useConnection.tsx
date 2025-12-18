@@ -1,12 +1,9 @@
 "use client";
 
-import { useCloud } from "@/cloud/useCloud";
 import React, { createContext, useState } from "react";
 import { useCallback } from "react";
-import { useConfig } from "./useConfig";
-import { useToast } from "@/components/toast/ToasterProvider";
 
-export type ConnectionMode = "cloud" | "manual" | "env";
+export type ConnectionMode = "guest";
 
 type TokenGeneratorData = {
   shouldConnect: boolean;
@@ -26,95 +23,68 @@ export const ConnectionProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { generateToken, wsUrl: cloudWSUrl } = useCloud();
-  const { setToastMessage } = useToast();
-  const { config } = useConfig();
   const [connectionDetails, setConnectionDetails] = useState<{
     wsUrl: string;
     token: string;
     mode: ConnectionMode;
     shouldConnect: boolean;
-  }>({ wsUrl: "", token: "", shouldConnect: false, mode: "manual" });
+  }>({ wsUrl: "", token: "", shouldConnect: false, mode: "guest" });
 
-  const connect = useCallback(
-    async (mode: ConnectionMode) => {
-      let token = "";
-      let url = "";
-      if (mode === "cloud") {
-        try {
-          token = await generateToken();
-        } catch (error) {
-          setToastMessage({
-            type: "error",
-            message:
-              "Failed to generate token, you may need to increase your role in this LiveKit Cloud project.",
-          });
-        }
-        url = cloudWSUrl;
-      } else if (mode === "env") {
-        if (!process.env.NEXT_PUBLIC_LIVEKIT_URL) {
-          throw new Error("NEXT_PUBLIC_LIVEKIT_URL is not set");
-        }
-        url = process.env.NEXT_PUBLIC_LIVEKIT_URL;
-        const body: Record<string, any> = {};
-        if (config.settings.room_name) {
-          body.roomName = config.settings.room_name;
-        }
-        if (config.settings.participant_id) {
-          body.participantId = config.settings.participant_id;
-        }
-        if (config.settings.participant_name) {
-          body.participantName = config.settings.participant_name;
-        }
-        if (config.settings.agent_name) {
-          body.agentName = config.settings.agent_name;
-        }
-        if (config.settings.metadata) {
-          body.metadata = config.settings.metadata;
-        }
-        const attributesArray = Array.isArray(config.settings.attributes)
-          ? config.settings.attributes
-          : [];
-        if (attributesArray?.length) {
-          const attributes = attributesArray.reduce(
-            (acc, attr) => {
-              if (attr.key) {
-                acc[attr.key] = attr.value;
-              }
-              return acc;
-            },
-            {} as Record<string, string>,
-          );
-          body.attributes = attributes;
-        }
-        const { accessToken } = await fetch(`/api/token`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        }).then((res) => res.json());
-        token = accessToken;
-      } else {
-        token = config.settings.token;
-        url = config.settings.ws_url;
+  const connect = useCallback(async (_mode: ConnectionMode) => {
+    let apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!apiBase) {
+      const envRes = await fetch("/api/config");
+      if (envRes.ok) {
+        const data = await envRes.json();
+        apiBase = data.apiBaseUrl;
       }
-      setConnectionDetails({ wsUrl: url, token, shouldConnect: true, mode });
-    },
-    [
-      cloudWSUrl,
-      config.settings.token,
-      config.settings.ws_url,
-      config.settings.room_name,
-      config.settings.participant_name,
-      config.settings.agent_name,
-      config.settings.participant_id,
-      config.settings.metadata,
-      config.settings.attributes,
-      generateToken,
-      setToastMessage,
-    ],
-  );
+    }
+    if (!apiBase) {
+      throw new Error("NEXT_PUBLIC_API_BASE_URL is not set");
+    }
+    const normalizedBase = apiBase.replace(/\/$/, "");
+
+    const guestLogin = await fetch(`${normalizedBase}/auth/guest-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!guestLogin.ok) {
+      throw new Error("Guest login failed");
+    }
+    const guestData = await guestLogin.json();
+    const bearer =
+      guestData.access_token ||
+      guestData.accessToken ||
+      guestData.token ||
+      guestData?.data?.access_token;
+    if (!bearer) {
+      throw new Error("Guest login did not return an access token");
+    }
+
+    const sessionRes = await fetch(`${normalizedBase}/v1/realtime/sessions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${bearer}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+    if (!sessionRes.ok) {
+      const detail = await sessionRes.text();
+      throw new Error(
+        `Failed to create realtime session: ${sessionRes.status} ${detail}`,
+      );
+    }
+    const session = await sessionRes.json();
+    const url = session.ws_url;
+    const token =
+      session.client_secret?.value || session.client_secret || session.token;
+    if (!url || !token) {
+      throw new Error("Realtime session response missing ws_url or token");
+    }
+
+    setConnectionDetails({ wsUrl: url, token, shouldConnect: true, mode: "guest" });
+  }, []);
 
   const disconnect = useCallback(async () => {
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));

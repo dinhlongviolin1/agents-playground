@@ -44,14 +44,16 @@ export type UserSettings = {
   attributes?: AttributeItem[];
 };
 
+const ACCENT_THEME = "amber";
+
 // Fallback if NEXT_PUBLIC_APP_CONFIG is not set
 const defaultConfig: AppConfig = {
-  title: "LiveKit Agents Playground",
+  title: "Jan Agent",
   description: "A virtual workbench for testing multimodal AI agents.",
   video_fit: "contain",
   settings: {
     editable: true,
-    theme_color: "cyan",
+    theme_color: ACCENT_THEME,
     chat: true,
     inputs: {
       camera: true,
@@ -164,7 +166,7 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
         video: boolToString(us.outputs.video),
         audio: boolToString(us.outputs.audio),
         chat: boolToString(us.chat),
-        theme_color: us.theme_color || "cyan",
+        theme_color: ACCENT_THEME,
       });
       // Note: We don't set ws_url and token to the URL on purpose
       router.replace("/#" + obj.toString());
@@ -200,9 +202,13 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
     }
     const newCookieSettings = await getSettingsFromCookies();
     if (!newCookieSettings) {
+      appConfigFromSettings.settings.theme_color = ACCENT_THEME;
       return appConfigFromSettings;
     }
-    appConfigFromSettings.settings = newCookieSettings;
+    appConfigFromSettings.settings = {
+      ...newCookieSettings,
+      theme_color: ACCENT_THEME,
+    };
     return { ...appConfigFromSettings };
   }, [
     appConfig,
@@ -215,17 +221,18 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
 
   const setUserSettings = useCallback(
     (settings: UserSettings) => {
+      const sanitizedSettings = { ...settings, theme_color: ACCENT_THEME };
       const appConfigFromSettings = appConfig;
       if (appConfigFromSettings.settings.editable === false) {
-        setLocalColorOverride(settings.theme_color);
+        setLocalColorOverride(ACCENT_THEME);
         return;
       }
-      setUrlSettings(settings);
-      setCookieSettings(settings);
+      setUrlSettings(sanitizedSettings);
+      setCookieSettings(sanitizedSettings);
       _setConfig((prev) => {
         return {
           ...prev,
-          settings: settings,
+          settings: sanitizedSettings,
         };
       });
     },

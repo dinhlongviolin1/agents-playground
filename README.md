@@ -35,13 +35,13 @@ You can try out a demo of the playground with [KITT](https://kitt.livekit.io) or
 pnpm install
 ```
 
-2. Copy and rename the `.env.example` file to `.env.local` and fill in the necessary environment variables.
+2. Copy and rename the `.env.example` file to `.env.local` and set the guest API base (used at runtime; also pass when running Docker):
 
 ```
-LIVEKIT_API_KEY=<your API KEY>
-LIVEKIT_API_SECRET=<Your API Secret>
-NEXT_PUBLIC_LIVEKIT_URL=wss://<Your Cloud URL>
+NEXT_PUBLIC_API_BASE_URL=https://<your API base>   # required for guest login + realtime session creation
 ```
+
+> Note: Manual/env connection modes have been removed; the app now signs in as a guest and obtains the LiveKit URL/token from your backend.
 
 3. Run the development server:
 
@@ -49,7 +49,7 @@ NEXT_PUBLIC_LIVEKIT_URL=wss://<Your Cloud URL>
 pnpm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) with your browser, then click **Go to agents** to use the playground.
 5. If you haven't done so yet, start your agent (with the same project variables as in step 2.)
 6. Connect to a room and see your agent connecting to the playground
 

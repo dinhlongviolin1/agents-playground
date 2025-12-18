@@ -3,10 +3,13 @@
 @tailwind utilities;
 
 body {
-  background: black;
+  background: #121212;
   --lk-va-bar-gap: 4px;
   --lk-va-bar-width: 4px;
   --lk-va-border-radius: 2px;
+  --lk-theme-color: #f17455;
+  --lk-text-link: #f17455;
+  --lk-accent-color: #f17455;
 }
 
 #__next {
@@ -43,11 +46,67 @@ body {
   border-radius: 5px;
 }
 
+a,
+.lk-chat a,
+.lk-chat .lk-link {
+  color: #f17455;
+  transition: color 0.2s ease;
+}
+
+a:hover,
+.lk-chat a:hover,
+.lk-chat .lk-link:hover {
+  color: #ff8d70;
+}
+
+.lk-tile {
+  background-color: #171717 !important;
+  border-color: #262626 !important;
+  color: #e5e5e5;
+}
+
+.lk-tile__header,
+.lk-tile__title {
+  color: #f17455;
+}
+
+.lk-chat {
+  --lk-theme-color: #f17455;
+  --lk-accent-color: #f17455;
+}
+
+.lk-chat-message__author {
+  color: #f17455 !important;
+}
+
+.lk-button {
+  background: #f17455 !important;
+  color: #121212 !important;
+  border-color: #f17455 !important;
+}
+
+.lk-button:hover {
+  background: transparent !important;
+  color: #f17455 !important;
+}
+
 @keyframes fadeIn {
   0% {
     opacity: 0;
   }
   100% {
     opacity: 1;
+  }
+}
+
+@keyframes waveLogo {
+  0% {
+    transform: rotate(-6deg) translateY(0);
+  }
+  50% {
+    transform: rotate(6deg) translateY(-3px);
+  }
+  100% {
+    transform: rotate(-6deg) translateY(0);
   }
 }
